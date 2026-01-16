@@ -42,7 +42,7 @@
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-500 uppercase mb-1">密碼</label>
-                    <input type="password" id="login-pwd" class="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="密碼" required>
+                    <input type="password" id="login-pwd" class="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="請輸入密碼" required>
                 </div>
                 <div id="login-error" class="hidden text-red-500 text-xs text-center font-medium bg-red-50 p-2 rounded">帳號或密碼錯誤</div>
                 <button type="submit" class="w-full bg-slate-900 text-white py-2.5 rounded-lg font-bold hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/20">
@@ -50,7 +50,10 @@
                 </button>
             </form>
             <div class="mt-6 pt-6 border-t border-slate-100 text-center">
-                <p class="text-xs text-slate-400">格式: exp_01 ~ exp_10 (動態密碼)</p>
+                <p class="text-xs text-slate-400">
+                    專家帳號格式: exp_01 ~ exp_10<br>
+                    <span class="font-bold text-slate-500">密碼請由承辦人員給您</span>
+                </p>
             </div>
         </div>
     </div>
@@ -135,9 +138,9 @@
                                 <div>
                                     <div class="flex items-center gap-2 mb-2">
                                         <span class="bg-slate-100 text-slate-500 text-xs px-2 py-0.5 rounded font-bold uppercase tracking-wider">PAPER ID</span>
-                                        <span class="text-sm font-mono font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100" id="p-id">P-XX</span>
+                                        <span class="text-sm font-mono font-bold text-blue-600 bg-blue-50 px-2 rounded min-w-[2rem] text-center border border-blue-100" id="p-id">P-XX</span>
                                     </div>
-                                    <h1 class="text-lg font-bold text-slate-700 leading-tight" id="p-title">文獻標題</h1>
+                                    <h1 class="text-lg font-bold text-slate-700 leading-tight mb-2" id="p-title">文獻標題</h1>
                                 </div>
                                 <!-- Model Badge -->
                                 <div class="text-right">
@@ -268,7 +271,7 @@
         // 請將此網址換成您的 Google Apps Script 網址
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby-I5UBx9DxhYl9rF9bSY8vVo_cor5yvDyAGU4IypOMqYH_xCz6fU2wCGy07eB-CA/exec"; 
 
-        // 評分標準 (更新為 3 個項目)
+        // 評分標準 (3個項目)
         const criteria = [
             { id: 'content_accuracy', label: '文字內容正確', desc: '內文說明與原文一致，無事實錯誤' },
             { id: 'citation_accuracy', label: '文字引用正確', desc: '數據、引用來源與原文相符' },
@@ -309,7 +312,7 @@
         });
 
         function loadState() {
-            const saved = localStorage.getItem('AI_REVIEW_DB_V6'); // Version key
+            const saved = localStorage.getItem('AI_REVIEW_DB_V7'); // Version key
             if (saved) { 
                 ASSIGNED_TASKS_DB = JSON.parse(saved); 
                 console.log("State loaded from LocalStorage"); 
@@ -317,7 +320,7 @@
         }
 
         function saveState() { 
-            localStorage.setItem('AI_REVIEW_DB_V6', JSON.stringify(ASSIGNED_TASKS_DB)); 
+            localStorage.setItem('AI_REVIEW_DB_V7', JSON.stringify(ASSIGNED_TASKS_DB)); 
         }
 
         // ================= LOGIC: TASK DISTRIBUTION =================
@@ -371,7 +374,8 @@
                             title: `文獻 ${best.pid}`, // 簡化標題
                             realModel: best.model,
                             status: 'pending',
-                            scores: { content_accuracy: 5, citation_accuracy: 5, readability: 5 } // Updated default scores
+                            // 初始化分數
+                            scores: { content_accuracy: 5, citation_accuracy: 5, readability: 5 }
                         });
                         
                         targetCounts[best.key]++;
@@ -432,7 +436,15 @@
                 expertView.classList.remove('hidden');
                 adminView.classList.add('hidden');
                 btnExpert.className = "px-4 py-1.5 rounded-md text-sm font-medium bg-blue-600 text-white shadow flex items-center gap-2";
-                if(btnAdmin) btnAdmin.className = "px-4 py-1.5 rounded-md text-sm font-medium text-slate-400 hover:text-white flex items-center gap-2";
+                
+                // CRITICAL FIX: Only show admin button if logged in as admin
+                if(loggedInUser.role === 'admin') {
+                    btnAdmin.classList.remove('hidden');
+                    btnAdmin.className = "px-4 py-1.5 rounded-md text-sm font-medium text-slate-400 hover:text-white flex items-center gap-2";
+                } else {
+                    btnAdmin.classList.add('hidden');
+                }
+                
                 renderTaskList();
             } else {
                 expertView.classList.add('hidden');
@@ -533,6 +545,7 @@
 
         function submitReview() {
             const task = ASSIGNED_TASKS_DB[currentViewContext].find(t => t.id === currentTaskId);
+            // 抓取並更新分數到本地物件
             criteria.forEach(c => task.scores[c.id] = parseFloat(document.getElementById(`range-${c.id}`).value));
             
             const btn = document.getElementById('btn-submit');
@@ -542,7 +555,7 @@
 
             fetch(GOOGLE_SCRIPT_URL, {
                 method: 'POST',
-                body: JSON.stringify(task),
+                body: JSON.stringify(task), // 送出包含最新分數的 task 物件
                 mode: 'no-cors' 
             }).then(() => {
                 task.status = 'completed';
