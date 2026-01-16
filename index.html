@@ -38,7 +38,7 @@
             <form onsubmit="handleLogin(event)" class="space-y-4">
                 <div>
                     <label class="block text-xs font-bold text-slate-500 uppercase mb-1">專家帳號</label>
-                    <input type="text" id="login-id" class="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="e.g., exp_01" required>
+                    <input type="text" id="login-id" class="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="例如: A01" required>
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-500 uppercase mb-1">密碼</label>
@@ -51,7 +51,7 @@
             </form>
             <div class="mt-6 pt-6 border-t border-slate-100 text-center">
                 <p class="text-xs text-slate-400">
-                    專家帳號格式: exp_01 ~ exp_10<br>
+                    專家帳號格式: A01 ~ A10<br>
                     <span class="font-bold text-slate-500">密碼請由承辦人員給您</span>
                 </p>
             </div>
@@ -140,7 +140,7 @@
                                         <span class="bg-slate-100 text-slate-500 text-xs px-2 py-0.5 rounded font-bold uppercase tracking-wider">PAPER ID</span>
                                         <span class="text-sm font-mono font-bold text-blue-600 bg-blue-50 px-2 rounded min-w-[2rem] text-center border border-blue-100" id="p-id">P-XX</span>
                                     </div>
-                                    <h1 class="text-lg font-bold text-slate-700 leading-tight mb-2" id="p-title">文獻標題</h1>
+                                    <h1 class="text-lg font-bold text-slate-700 leading-tight" id="p-title">文獻標題</h1>
                                 </div>
                                 <!-- Model Badge -->
                                 <div class="text-right">
@@ -283,13 +283,20 @@
             return (i + 1) < 10 ? "0" + (i + 1) : "" + (i + 1);
         });
 
-        // 建立使用者資料庫 (動態密碼)
+        // 建立使用者資料庫 (動態密碼：百位補數法)
         const USER_DB = { 'admin': { pwd: 'admin', name: 'Admin', role: 'admin' } };
         for(let i=1; i<=10; i++) {
-            const id = i < 10 ? `exp_0${i}` : `exp_${i}`;
+            // ID: A01 ~ A10
+            const id = i < 10 ? `A0${i}` : `A${i}`;
             const num = i;
-            const dynamicPwd = `${num}${num+1}${num+2}${num+3}`; 
-            USER_DB[id] = { pwd: dynamicPwd, name: `Expert ${i}`, role: 'expert' };
+            
+            // 密碼邏輯：前兩碼是編號(補0)，後兩碼是 100-編號
+            // 例：A01 -> 0199, A02 -> 0298, A10 -> 1090
+            let prefix = num < 10 ? "0" + num : "" + num;
+            let suffix = (100 - num).toString();
+            const dynamicPwd = prefix + suffix; 
+            
+            USER_DB[id] = { pwd: dynamicPwd, name: `專家 ${id}`, role: 'expert' };
         }
 
         // ================= STATE MANAGEMENT =================
@@ -312,7 +319,7 @@
         });
 
         function loadState() {
-            const saved = localStorage.getItem('AI_REVIEW_DB_V7'); // Version key
+            const saved = localStorage.getItem('AI_REVIEW_DB_V8'); // New key to force fresh state
             if (saved) { 
                 ASSIGNED_TASKS_DB = JSON.parse(saved); 
                 console.log("State loaded from LocalStorage"); 
@@ -320,7 +327,7 @@
         }
 
         function saveState() { 
-            localStorage.setItem('AI_REVIEW_DB_V7', JSON.stringify(ASSIGNED_TASKS_DB)); 
+            localStorage.setItem('AI_REVIEW_DB_V8', JSON.stringify(ASSIGNED_TASKS_DB)); 
         }
 
         // ================= LOGIC: TASK DISTRIBUTION =================
