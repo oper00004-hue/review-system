@@ -15,131 +15,195 @@
         .active-task { border-left: 4px solid #3B82F6; background-color: #EFF6FF; }
         .cov-good { background-color: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
         .cov-bad { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+        /* Range Input Styling */
         input[type=range] { -webkit-appearance: none; background: transparent; width: 100%; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #3B82F6; margin-top: -6px; cursor: pointer; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #3B82F6; margin-top: -6px; cursor: pointer; transition: transform 0.1s; }
+        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
         input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: #e2e8f0; border-radius: 2px; }
         .login-bg { background-image: radial-gradient(#cbd5e1 1px, transparent 1px); background-size: 20px 20px; }
     </style>
 </head>
 <body class="text-slate-800 h-screen flex flex-col overflow-hidden">
 
-    <!-- Login View -->
+    <!-- ================= Login View ================= -->
     <div id="view-login" class="fixed inset-0 z-50 flex items-center justify-center login-bg bg-slate-50">
         <div class="glass w-full max-w-md p-8 rounded-2xl shadow-xl fade-in relative overflow-hidden">
             <div class="text-center mb-8">
                 <div class="bg-blue-600 w-12 h-12 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/30 mx-auto mb-4">
-                    <i class="fa-solid fa-users-viewfinder text-white text-xl"></i>
+                    <i class="fa-solid fa-file-arrow-down text-white text-xl"></i>
                 </div>
                 <h1 class="text-2xl font-bold text-slate-800">論文彙整評測系統</h1>
-                <p class="text-slate-500 text-sm mt-2">正式版 (10專家 x 12篇)</p>
+                <p class="text-slate-500 text-sm mt-2">下載與評分平台 (10人/12篇)</p>
             </div>
             <form onsubmit="handleLogin(event)" class="space-y-4">
-                <input type="text" id="login-id" class="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg" placeholder="帳號 (e.g., exp_01)" required>
-                <input type="password" id="login-pwd" class="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg" placeholder="密碼" required>
-                <div id="login-error" class="hidden text-red-500 text-xs text-center font-medium">帳號或密碼錯誤</div>
-                <button type="submit" class="w-full bg-slate-900 text-white py-2.5 rounded-lg font-bold hover:bg-slate-800 transition-all">登入系統</button>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">專家帳號</label>
+                    <input type="text" id="login-id" class="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="e.g., exp_01" required>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">密碼</label>
+                    <input type="password" id="login-pwd" class="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="密碼" required>
+                </div>
+                <div id="login-error" class="hidden text-red-500 text-xs text-center font-medium bg-red-50 p-2 rounded">帳號或密碼錯誤</div>
+                <button type="submit" class="w-full bg-slate-900 text-white py-2.5 rounded-lg font-bold hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/20">
+                    登入系統 <i class="fa-solid fa-arrow-right ml-2"></i>
+                </button>
             </form>
-            <div class="mt-6 pt-6 border-t border-slate-100 text-center text-xs text-slate-400">
-                專家帳號格式: exp_01 ~ exp_10
+            <div class="mt-6 pt-6 border-t border-slate-100 text-center">
+                <p class="text-xs text-slate-400">格式: exp_01 ~ exp_10 (動態密碼)</p>
             </div>
         </div>
     </div>
 
-    <!-- Main App -->
+    <!-- ================= Main App ================= -->
     <div id="app-container" class="flex flex-col h-full hidden fade-in">
+        <!-- Navbar -->
         <nav class="bg-slate-900 text-white shadow-lg z-40 shrink-0">
             <div class="max-w-7xl mx-auto px-4">
                 <div class="flex justify-between h-16 items-center">
                     <div class="flex items-center gap-3">
                         <div class="bg-blue-600 w-9 h-9 rounded-lg flex items-center justify-center"><i class="fa-solid fa-file-shield"></i></div>
-                        <div><span class="font-bold text-lg">Independent<span class="text-blue-400">Review</span></span><span class="text-xs text-slate-400 block -mt-1" id="user-role-display"></span></div>
+                        <div>
+                            <span class="font-bold text-lg tracking-wide">Independent<span class="text-blue-400">Review</span></span>
+                            <span class="text-xs text-slate-400 block -mt-1" id="user-role-display">獨立解析評測模式</span>
+                        </div>
                     </div>
                     <div class="flex items-center gap-4">
                         <div class="flex bg-slate-800 rounded-lg p-1" id="nav-controls">
-                            <button onclick="switchView('expert')" id="btn-expert" class="px-4 py-1.5 rounded-md text-sm font-medium bg-blue-600 text-white"><i class="fa-solid fa-pen-nib"></i> 專家評測</button>
-                            <button onclick="switchView('admin')" id="btn-admin" class="hidden px-4 py-1.5 rounded-md text-sm font-medium text-slate-400"><i class="fa-solid fa-network-wired"></i> 全域監控</button>
+                            <button onclick="switchView('expert')" id="btn-expert" class="px-4 py-1.5 rounded-md text-sm font-medium bg-blue-600 text-white shadow flex items-center gap-2">
+                                <i class="fa-solid fa-pen-nib"></i> 評測任務
+                            </button>
+                            <button onclick="switchView('admin')" id="btn-admin" class="hidden px-4 py-1.5 rounded-md text-sm font-medium text-slate-400 hover:text-white flex items-center gap-2">
+                                <i class="fa-solid fa-network-wired"></i> 全域監控
+                            </button>
                         </div>
                         <div class="border-l border-slate-700 pl-4 flex items-center gap-3">
-                            <div class="text-right hidden md:block"><div class="text-xs text-slate-400">User</div><div class="text-sm font-bold leading-none" id="current-user-name">Guest</div></div>
-                            <button onclick="logout()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-right-from-bracket text-lg"></i></button>
+                            <div class="text-right hidden md:block">
+                                <div class="text-xs text-slate-400">User</div>
+                                <div class="text-sm font-bold leading-none" id="current-user-name">Guest</div>
+                            </div>
+                            <button onclick="logout()" class="text-slate-400 hover:text-white transition-colors">
+                                <i class="fa-solid fa-right-from-bracket text-lg"></i>
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
         </nav>
 
+        <!-- Content -->
         <main class="flex-grow container mx-auto px-4 py-6 overflow-hidden flex flex-col relative">
+            
+            <!-- Expert View -->
             <div id="view-expert" class="h-full flex gap-6 absolute inset-0 px-4 py-6 z-10 bg-[#f8fafc]">
+                <!-- Sidebar -->
                 <div class="w-80 glass rounded-xl shadow-sm flex flex-col overflow-hidden shrink-0 h-full">
                     <div class="p-4 border-b border-slate-200 bg-white">
                         <div id="admin-selector-wrapper" class="mb-4 hidden">
-                            <label class="text-xs font-bold text-slate-500 uppercase">檢視專家 (Admin)</label>
-                            <select id="expert-selector" onchange="adminChangeExpert(this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-sm"></select>
+                            <label class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">檢視專家 (Admin)</label>
+                            <select id="expert-selector" onchange="adminChangeExpert(this.value)" class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5"></select>
                         </div>
-                        <h2 class="font-bold text-slate-800 flex justify-between items-center">待評測任務 <span class="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded-full font-mono" id="progress-text">0/12</span></h2>
-                        <div class="w-full bg-slate-100 rounded-full h-1.5 mt-3"><div class="bg-blue-600 h-1.5 rounded-full transition-all duration-500" style="width: 0%" id="progress-bar"></div></div>
+                        <h2 class="font-bold text-slate-800 flex justify-between items-center">
+                            分派任務列表
+                            <span class="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded-full font-mono" id="progress-text">0/12</span>
+                        </h2>
+                        <div class="w-full bg-slate-100 rounded-full h-1.5 mt-3">
+                            <div class="bg-blue-600 h-1.5 rounded-full transition-all duration-500" style="width: 0%" id="progress-bar"></div>
+                        </div>
                     </div>
-                    <div class="overflow-y-auto flex-1 p-2 space-y-2 bg-slate-50/50" id="task-list"></div>
+                    <div class="overflow-y-auto flex-1 p-2 space-y-2 bg-slate-50/50" id="task-list">
+                        <!-- Task items will be injected here -->
+                    </div>
                 </div>
 
+                <!-- Main Content Area -->
                 <div class="flex-1 glass rounded-xl shadow-sm flex flex-col overflow-hidden relative h-full">
+                    <!-- Empty State -->
                     <div id="empty-state" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-50 z-20">
-                        <div class="bg-white p-6 rounded-full shadow-sm mb-4"><i class="fa-solid fa-dice-d20 text-4xl text-slate-300"></i></div>
-                        <p class="text-slate-500 font-medium">任務已就緒</p>
+                        <div class="bg-white p-6 rounded-full shadow-sm mb-4">
+                            <i class="fa-solid fa-file-import text-4xl text-slate-300"></i>
+                        </div>
+                        <p class="text-slate-500 font-medium">請從左側選擇一篇文獻</p>
+                        <p class="text-slate-400 text-sm mt-1">系統將提供原始檔與彙整檔供您下載</p>
                     </div>
-                    
-                    <!-- 核心操作區 -->
+
+                    <!-- Review Panel -->
                     <div id="review-panel" class="flex flex-col h-full opacity-0 pointer-events-none transition-all duration-300 z-10">
+                        <!-- Header -->
                         <div class="p-5 border-b border-slate-200 bg-white shrink-0 shadow-sm">
                             <div class="flex justify-between items-start gap-4">
-                                <div class="flex-1">
-                                    <div class="flex items-center gap-2 mb-2"><span class="bg-slate-100 text-slate-500 text-xs px-2 py-0.5 rounded font-bold">PAPER</span><span class="text-xs text-slate-400 font-mono" id="p-id">ID</span></div>
-                                    <h1 class="text-lg font-bold text-slate-700 leading-tight mb-2" id="p-title">Title</h1>
+                                <div>
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <span class="bg-slate-100 text-slate-500 text-xs px-2 py-0.5 rounded font-bold uppercase tracking-wider">PAPER ID</span>
+                                        <span class="text-sm font-mono font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100" id="p-id">P-XX</span>
+                                    </div>
+                                    <h1 class="text-lg font-bold text-slate-700 leading-tight" id="p-title">文獻標題</h1>
+                                </div>
+                                <!-- Model Badge -->
+                                <div class="text-right">
+                                    <span class="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Assigned Model</span>
+                                    <div id="model-badge" class="mt-1"></div>
                                 </div>
                             </div>
                         </div>
-                        
-                        <div class="flex-1 overflow-y-auto bg-slate-50 p-6 flex flex-col items-center">
-                            <div class="max-w-3xl w-full space-y-8">
+
+                        <!-- Scrollable Body -->
+                        <div class="flex-1 overflow-y-auto bg-slate-50 p-6">
+                            <div class="max-w-3xl mx-auto space-y-8">
                                 
-                                <!-- 步驟 1: 下載區 -->
+                                <!-- Step 1: Download Section -->
                                 <div class="bg-white p-8 rounded-xl border border-blue-100 shadow-sm text-center">
-                                    <h3 class="text-lg font-bold text-slate-700 mb-2">步驟一：下載並閱讀</h3>
-                                    <p class="text-slate-500 text-sm mb-6">請下載以下兩份 PDF 檔案進行閱讀與比對。</p>
+                                    <h3 class="text-lg font-bold text-slate-700 mb-2">
+                                        <span class="bg-blue-600 text-white w-6 h-6 rounded-full inline-flex items-center justify-center text-xs mr-2">1</span>
+                                        下載閱讀資料
+                                    </h3>
+                                    <p class="text-slate-500 text-sm mb-6">請下載以下兩份 PDF 檔案進行閱讀與比對。下載後檔案名稱將自動匿名化。</p>
                                     
                                     <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                                        <a id="btn-download-pdf" href="#" target="_blank" class="flex items-center justify-center gap-3 px-6 py-4 rounded-lg bg-slate-50 border border-slate-200 hover:bg-slate-100 hover:border-slate-300 transition-all group">
-                                            <div class="w-10 h-10 rounded-full bg-red-100 text-red-500 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                                <i class="fa-regular fa-file-pdf text-xl"></i>
+                                        <!-- Paper Download -->
+                                        <a id="btn-download-pdf" href="#" target="_blank" class="flex items-center justify-center gap-3 px-6 py-4 rounded-lg bg-slate-50 border border-slate-200 hover:bg-slate-100 hover:border-slate-300 transition-all group w-full sm:w-64">
+                                            <div class="w-12 h-12 rounded-full bg-white border border-red-100 text-red-500 flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm">
+                                                <i class="fa-regular fa-file-pdf text-2xl"></i>
                                             </div>
                                             <div class="text-left">
                                                 <div class="font-bold text-slate-700">原始文獻 PDF</div>
-                                                <div class="text-xs text-slate-400">Original Paper</div>
+                                                <div class="text-xs text-slate-400 font-mono">Original Paper</div>
                                             </div>
                                         </a>
 
-                                        <a id="btn-download-review" href="#" target="_blank" class="flex items-center justify-center gap-3 px-6 py-4 rounded-lg bg-blue-50 border border-blue-200 hover:bg-blue-100 hover:border-blue-300 transition-all group">
-                                            <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                                <i class="fa-solid fa-robot text-xl"></i>
+                                        <!-- Review Download -->
+                                        <a id="btn-download-review" href="#" target="_blank" class="flex items-center justify-center gap-3 px-6 py-4 rounded-lg bg-blue-50 border border-blue-200 hover:bg-blue-100 hover:border-blue-300 transition-all group w-full sm:w-64">
+                                            <div class="w-12 h-12 rounded-full bg-white border border-blue-100 text-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm">
+                                                <i class="fa-solid fa-robot text-2xl"></i>
                                             </div>
                                             <div class="text-left">
                                                 <div class="font-bold text-blue-700">AI 彙整報告 PDF</div>
-                                                <div class="text-xs text-blue-400">Anonymous AI Review</div>
+                                                <div class="text-xs text-blue-400 font-mono">Anonymous Review</div>
                                             </div>
                                         </a>
                                     </div>
-                                    <div id="model-badge" class="mt-4 inline-block text-[10px] text-slate-300 bg-slate-50 px-2 py-0.5 rounded border border-slate-100">匿名模型</div>
                                 </div>
 
-                                <!-- 步驟 2: 評分區 -->
-                                <div class="bg-white p-8 rounded-xl border border-slate-200 shadow-sm">
-                                    <div class="flex justify-between items-center mb-6 pb-4 border-b border-slate-100">
-                                        <h3 class="text-lg font-bold text-slate-700">步驟二：品質評分 (0-10)</h3>
-                                        <div class="flex items-baseline gap-2"><span class="text-xs text-slate-400">平均分</span><span class="text-3xl font-bold text-blue-600 score-badge" id="task-total">5.0</span></div>
+                                <!-- Step 2: Scoring Section -->
+                                <div class="bg-white p-8 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
+                                    <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-600"></div>
+                                    <div class="flex justify-between items-center mb-8 pb-4 border-b border-slate-100">
+                                        <h3 class="text-lg font-bold text-slate-700">
+                                            <span class="bg-slate-700 text-white w-6 h-6 rounded-full inline-flex items-center justify-center text-xs mr-2">2</span>
+                                            品質評分
+                                        </h3>
+                                        <div class="flex items-baseline gap-2 bg-slate-50 px-4 py-2 rounded-lg border border-slate-100">
+                                            <span class="text-xs text-slate-400 font-bold uppercase">Average Score</span>
+                                            <span class="text-3xl font-bold text-blue-600 score-badge" id="task-total">5.0</span>
+                                        </div>
                                     </div>
-                                    <div class="grid grid-cols-1 gap-8" id="score-form-container"></div>
-                                    <div class="mt-10 flex justify-end">
-                                        <button onclick="submitReview()" id="btn-submit" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold text-lg transition-all shadow-lg shadow-blue-500/30 flex items-center gap-2 transform hover:-translate-y-0.5">
+                                    
+                                    <div class="grid grid-cols-1 gap-8" id="score-form-container">
+                                        <!-- Sliders injected here -->
+                                    </div>
+
+                                    <div class="mt-10 pt-6 border-t border-slate-50 flex justify-end">
+                                        <button onclick="submitReview()" id="btn-submit" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold text-lg transition-all shadow-lg shadow-blue-500/30 flex items-center gap-2 transform hover:-translate-y-0.5 active:translate-y-0">
                                             <i class="fa-regular fa-paper-plane"></i> 提交評分
                                         </button>
                                     </div>
@@ -155,36 +219,68 @@
             <div id="view-admin" class="h-full w-full hidden absolute inset-0 bg-[#f8fafc] z-0 p-6 overflow-y-auto">
                  <div class="max-w-6xl mx-auto">
                     <div class="mb-6 flex justify-between items-end">
-                         <div><h2 class="text-2xl font-bold text-slate-800">評測監控台 (10人 / 12篇)</h2><p class="text-slate-500 text-sm">每篇彙整預計被評 2 次 (總任務 120 / 總彙整 60)</p></div>
-                         <button onclick="distributeTasksGlobally(true)" class="text-xs bg-red-50 text-red-500 border border-red-200 px-3 py-1 rounded">重置分配</button>
+                         <div>
+                             <h2 class="text-2xl font-bold text-slate-800">全域覆蓋率監控</h2>
+                             <p class="text-slate-500 text-sm">目標：每篇 AI 彙整 (Gemini/GPT) 至少被評 2 次</p>
+                         </div>
+                         <button onclick="distributeTasksGlobally(true)" class="text-xs bg-white text-red-500 hover:bg-red-50 border border-red-200 px-4 py-2 rounded-lg transition-colors font-medium">
+                            <i class="fa-solid fa-rotate-right mr-1"></i> 重置所有分配
+                         </button>
                     </div>
                     <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 mb-6">
-                        <div class="flex justify-between mb-4"><h3 class="font-bold text-slate-700">60篇彙整覆蓋率 (30篇文獻 x 2模型)</h3><div class="text-xs flex gap-3"><span class="flex items-center gap-1"><span class="w-3 h-3 bg-[#dcfce7] border border-[#bbf7d0]"></span> ≥2 OK</span><span class="flex items-center gap-1"><span class="w-3 h-3 bg-[#fee2e2] border border-[#fecaca]"></span> <2 Warning</span></div></div>
-                        <div class="overflow-x-auto"><table class="w-full text-xs text-center border-collapse"><thead><tr><th class="p-2 text-left text-slate-400">ID</th><th class="p-2">Gemini</th><th class="p-2">GPT</th></tr></thead><tbody id="coverage-table-body"></tbody></table></div>
+                        <div class="flex justify-between mb-4">
+                            <h3 class="font-bold text-slate-700">60 篇彙整分配狀況矩陣</h3>
+                            <div class="text-xs flex gap-3">
+                                <span class="flex items-center gap-1"><span class="w-3 h-3 bg-[#dcfce7] border border-[#bbf7d0] rounded-sm"></span> ≥2 (達標)</span>
+                                <span class="flex items-center gap-1"><span class="w-3 h-3 bg-[#fee2e2] border border-[#fecaca] rounded-sm"></span> <2 (不足)</span>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-xs text-center border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 text-slate-500">
+                                        <th class="p-3 text-left font-bold border-b">ID</th>
+                                        <th class="p-3 border-b border-l border-slate-200">Gemini 分配數</th>
+                                        <th class="p-3 border-b border-l border-slate-200">GPT 分配數</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="coverage-table-body"></tbody>
+                            </table>
+                        </div>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200"><h3 class="font-bold text-slate-700 mb-4">專家進度</h3><canvas id="progressChart" height="200"></canvas></div>
-                        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200"><h3 class="font-bold text-slate-700 mb-4">模型雷達圖</h3><canvas id="radarChart" height="200"></canvas></div>
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                            <h3 class="font-bold text-slate-700 mb-4">專家完成進度</h3>
+                            <canvas id="progressChart" height="200"></canvas>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                            <h3 class="font-bold text-slate-700 mb-4">模型能力雷達圖 (即時)</h3>
+                            <canvas id="radarChart" height="200"></canvas>
+                        </div>
                     </div>
                  </div>
             </div>
         </main>
     </div>
 
-    <!-- 不再依賴外部 data.js，直接使用 ID 對應檔案 -->
     <script>
-        // *** 重要：請將下方的網址替換為您的 Google Apps Script 部署網址 ***
+        // ================= CONFIGURATION =================
+        // 請將此網址換成您的 Google Apps Script 網址
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxz-wPAJspo8oCMngvshqBzdpcus2Z3Z5a60ZroXMTX3Wrp0IWneCrHr0jWpJR4UC_W/exec"; 
 
+        // 評分標準 (更新為 3 個項目)
         const criteria = [
-            { id: 'completeness', label: '1. 資訊完整性 (Completeness)', desc: '[基礎] 是否完整涵蓋背景、方法、結果與結論？有無遺漏重要章節？' },
-            { id: 'content_acc', label: '2. 內容信度 (Accuracy)', desc: '[基礎] 數據(P值/樣本數)、專有名詞是否精確？有無幻覺錯誤？' },
-            { id: 'structure', label: '3. 結構與可讀性 (Readability)', desc: '[溝通] 排版是否清晰？語句是否通順流暢？是否易於閱讀？' },
-            { id: 'insight', label: '4. 批判與觀點 (Insight)', desc: '[高階] 是否能精準篩選並提煉出該研究的核心學術價值與限制？' },
-            { id: 'utility', label: '5. 臨床應用價值 (Utility)', desc: '[頂層] 內容是否能轉化為具體的臨床建議？對實務有無幫助？' }
+            { id: 'content_accuracy', label: '文字內容正確', desc: '內文說明與原文一致，無事實錯誤' },
+            { id: 'citation_accuracy', label: '文字引用正確', desc: '數據、引用來源與原文相符' },
+            { id: 'readability', label: '文字可讀性', desc: '語句通順，淺顯易懂' }
         ];
 
-        // 定義使用者資料庫
+        // 30 篇文獻的 ID 清單 (不含內容，僅用於生成列表)
+        const PAPER_IDS = Array.from({length: 30}, (_, i) => {
+            return (i + 1) < 10 ? "0" + (i + 1) : "" + (i + 1);
+        });
+
+        // 建立使用者資料庫 (動態密碼)
         const USER_DB = { 'admin': { pwd: 'admin', name: 'Admin', role: 'admin' } };
         for(let i=1; i<=10; i++) {
             const id = i < 10 ? `exp_0${i}` : `exp_${i}`;
@@ -193,48 +289,64 @@
             USER_DB[id] = { pwd: dynamicPwd, name: `Expert ${i}`, role: 'expert' };
         }
 
-        // 定義文獻 ID 清單 (純 ID，不含內容，因為我們現在不顯示內容了)
-        // 1~30 篇
-        const PAPER_POOL = Array.from({length: 30}, (_, i) => {
-            let pid = (i + 1) < 10 ? "0" + (i + 1) : "" + (i + 1);
-            return {
-                paperId: pid,
-                title: `文獻 ${pid} (標題詳見下載之 PDF)` // 簡化標題，因為專家會看 PDF
-            };
+        // ================= STATE MANAGEMENT =================
+        let ASSIGNED_TASKS_DB = {}; 
+        let loggedInUser = null; 
+        let currentViewContext = null; 
+        let currentTaskId = null;
+        let chartInstance = null;
+        let radarInstance = null;
+
+        // ================= INITIALIZATION =================
+        window.addEventListener('load', () => {
+            loadState();
+            // 延遲一點點確保載入，若無資料則進行初次分配
+            setTimeout(() => {
+                if(Object.keys(ASSIGNED_TASKS_DB).length === 0) {
+                    distributeTasksGlobally();
+                }
+            }, 100);
         });
 
-        let ASSIGNED_TASKS_DB = {}; 
-
         function loadState() {
-            const saved = localStorage.getItem('AI_REVIEW_DB_V4'); // New version key
-            if (saved) { ASSIGNED_TASKS_DB = JSON.parse(saved); console.log("Loaded state"); } 
-            else { console.log("No state"); }
+            const saved = localStorage.getItem('AI_REVIEW_DB_V6'); // Version key
+            if (saved) { 
+                ASSIGNED_TASKS_DB = JSON.parse(saved); 
+                console.log("State loaded from LocalStorage"); 
+            }
         }
 
-        function saveState() { localStorage.setItem('AI_REVIEW_DB_V4', JSON.stringify(ASSIGNED_TASKS_DB)); }
+        function saveState() { 
+            localStorage.setItem('AI_REVIEW_DB_V6', JSON.stringify(ASSIGNED_TASKS_DB)); 
+        }
 
+        // ================= LOGIC: TASK DISTRIBUTION =================
         function distributeTasksGlobally(forceReset = false) {
             if (!forceReset && Object.keys(ASSIGNED_TASKS_DB).length > 0) return;
-            if(forceReset && !confirm("確定重置？所有專家分配將被清空。")) return;
+            if(forceReset && !confirm("警告：這將重置所有專家的任務分配。確定要繼續嗎？")) return;
 
-            console.log("Distributing tasks...");
+            console.log("Distributing tasks (10 Experts, 12 Tasks each)...");
             ASSIGNED_TASKS_DB = {};
             Object.keys(USER_DB).forEach(uid => { if(USER_DB[uid].role === 'expert') ASSIGNED_TASKS_DB[uid] = []; });
 
+            // 追蹤每篇文獻每個模型的分配次數
             let targetCounts = {};
-            PAPER_POOL.forEach(p => { 
-                targetCounts[`${p.paperId}_Gemini`] = 0; 
-                targetCounts[`${p.paperId}_GPT`] = 0; 
+            PAPER_IDS.forEach(pid => { 
+                targetCounts[`${pid}_Gemini`] = 0; 
+                targetCounts[`${pid}_GPT`] = 0; 
             });
 
             const expertIds = Object.keys(USER_DB).filter(k => USER_DB[k].role === 'expert'); 
             const TARGET_PER_EXPERT = 12;
 
+            // 進行 12 輪分配
             for (let round = 0; round < TARGET_PER_EXPERT; round++) {
                 let shuffledExperts = [...expertIds].sort(() => 0.5 - Math.random());
                 
                 shuffledExperts.forEach(expertId => {
                     const existingPaperIds = new Set(ASSIGNED_TASKS_DB[expertId].map(t => t.paperId));
+                    
+                    // 找出候選名單 (該專家尚未評過的文獻)
                     let candidates = [];
                     Object.keys(targetCounts).forEach(key => {
                         const [pid, model] = key.split('_');
@@ -243,6 +355,7 @@
                         }
                     });
 
+                    // 貪婪演算法：優先選分配次數最少的
                     candidates.sort((a, b) => {
                         if (a.count !== b.count) return a.count - b.count;
                         return 0.5 - Math.random();
@@ -250,16 +363,15 @@
 
                     if (candidates.length > 0) {
                         const best = candidates[0];
-                        const paperData = PAPER_POOL.find(p => p.paperId === best.pid);
                         
                         ASSIGNED_TASKS_DB[expertId].push({
                             id: `task_${expertId}_${ASSIGNED_TASKS_DB[expertId].length + 1}`,
                             expertId: expertId,
-                            paperId: paperData.paperId,
-                            title: paperData.title,
+                            paperId: best.pid,
+                            title: `文獻 ${best.pid}`, // 簡化標題
                             realModel: best.model,
                             status: 'pending',
-                            scores: { completeness: 5, content_acc: 5, structure: 5, insight: 5, utility: 5 }
+                            scores: { content_accuracy: 5, citation_accuracy: 5, readability: 5 } // Updated default scores
                         });
                         
                         targetCounts[best.key]++;
@@ -270,19 +382,7 @@
             if(document.getElementById('view-admin') && !document.getElementById('view-admin').classList.contains('hidden')) updateAdminStats();
         }
 
-        let loggedInUser = null; 
-        let currentViewContext = null; 
-        let currentTaskId = null;
-        let chartInstance = null;
-        let radarInstance = null;
-
-        window.addEventListener('load', () => {
-            loadState(); 
-            setTimeout(() => {
-                if(Object.keys(ASSIGNED_TASKS_DB).length === 0) distributeTasksGlobally();
-            }, 100);
-        });
-
+        // ================= UI FUNCTIONS =================
         function handleLogin(e) {
             e.preventDefault();
             const id = document.getElementById('login-id').value;
@@ -379,34 +479,44 @@
             document.getElementById('p-id').innerText = task.paperId;
             document.getElementById('p-title').innerText = task.title;
 
-            // 顯示模型標籤 (Admin 可見，專家顯示匿名)
+            // 模型標籤 (Admin 可見)
             const badge = document.getElementById('model-badge');
             if (loggedInUser.role === 'admin') {
-                badge.innerText = `模型: ${task.realModel}`;
+                badge.innerText = `[Admin View] Model: ${task.realModel}`;
                 badge.className = task.realModel === 'Gemini' ? "mt-4 inline-block text-[10px] text-blue-500 bg-blue-50 px-2 py-0.5 rounded border border-blue-100" : "mt-4 inline-block text-[10px] text-green-500 bg-green-50 px-2 py-0.5 rounded border border-green-100";
             } else {
                 badge.innerText = "匿名模型";
                 badge.className = "mt-4 inline-block text-[10px] text-slate-300 bg-slate-50 px-2 py-0.5 rounded border border-slate-100";
             }
 
-            // 下載連結邏輯
+            // 下載連結 (核心邏輯)
             const pdfBtn = document.getElementById('btn-download-pdf');
             const reviewBtn = document.getElementById('btn-download-review');
-            
             if(pdfBtn && reviewBtn) {
-                // 文獻 PDF
+                // 原始文獻 PDF (files/papers/P01.pdf)
                 pdfBtn.href = `files/papers/P${task.paperId}.pdf`;
                 pdfBtn.setAttribute('download', `Paper_${task.paperId}.pdf`);
 
-                // 彙整 PDF (後台有分 Gemini/GPT，前台強制改名隱藏)
+                // 彙整 PDF (files/reviews/P01_Gemini.pdf)
+                // 這裡會強制改名為 Analysis_P01.pdf，確保單盲
                 reviewBtn.href = `files/reviews/P${task.paperId}_${task.realModel}.pdf`;
                 reviewBtn.setAttribute('download', `Analysis_P${task.paperId}.pdf`);
             }
 
-            // 渲染評分表單
+            // 渲染評分區
             const container = document.getElementById('score-form-container');
             container.innerHTML = criteria.map(c => `
-                <div><div class="flex justify-between mb-2"><label class="text-sm font-bold text-slate-700">${c.label}</label><span class="text-sm font-mono font-bold text-blue-600 bg-blue-50 px-2 rounded" id="val-${c.id}">${task.scores[c.id]}</span></div><p class="text-xs text-slate-400 mb-3">${c.desc}</p><input type="range" min="0" max="10" value="${task.scores[c.id]}" step="0.5" id="range-${c.id}" oninput="document.getElementById('val-${c.id}').innerText=this.value; calculateTotal()"></div>
+                <div>
+                    <div class="flex justify-between mb-2">
+                        <label class="text-sm font-bold text-slate-700">${c.label}</label>
+                        <span class="text-sm font-mono font-bold text-blue-600 bg-blue-50 px-2 rounded min-w-[2rem] text-center" id="val-${c.id}">${task.scores[c.id]}</span>
+                    </div>
+                    <p class="text-xs text-slate-400 mb-4">${c.desc}</p>
+                    <input type="range" min="0" max="10" value="${task.scores[c.id]}" step="0.5" 
+                           id="range-${c.id}" 
+                           oninput="document.getElementById('val-${c.id}').innerText=this.value; calculateTotal()">
+                    <div class="flex justify-between text-[10px] text-slate-300 mt-1 px-1"><span>0</span><span>5</span><span>10</span></div>
+                </div>
             `).join('');
             
             calculateTotal();
@@ -450,7 +560,7 @@
                 }, 1500);
             }).catch(err => {
                 console.error(err);
-                alert("上傳失敗，請檢查網路。");
+                alert("上傳失敗，請檢查網路。資料已暫存於本機。");
                 btn.innerHTML = original;
                 btn.classList.remove('opacity-75', 'cursor-not-allowed');
             });
@@ -458,7 +568,7 @@
 
         function updateAdminStats() {
             let counts = {};
-            PAPER_POOL.forEach(p => { counts[`${p.paperId}_Gemini`] = 0; counts[`${p.paperId}_GPT`] = 0; });
+            PAPER_IDS.forEach(pid => { counts[`${pid}_Gemini`] = 0; counts[`${pid}_GPT`] = 0; });
             Object.values(ASSIGNED_TASKS_DB).flat().forEach(t => { 
                 if(counts[`${t.paperId}_${t.realModel}`] !== undefined) {
                     counts[`${t.paperId}_${t.realModel}`]++; 
@@ -489,8 +599,10 @@
                 }, options: { scales: { y: { beginAtZero: true, max: 12 } } }
             });
 
-            let geminiStats = { total: 0, criteria: [0,0,0,0,0] };
-            let gptStats = { total: 0, criteria: [0,0,0,0,0] };
+            // Radar
+            // Update to use dynamic criteria length
+            let geminiStats = { total: 0, criteria: new Array(criteria.length).fill(0) };
+            let gptStats = { total: 0, criteria: new Array(criteria.length).fill(0) };
             Object.values(ASSIGNED_TASKS_DB).flat().forEach(t => {
                 if(t.status === 'completed') {
                     const target = t.realModel === 'Gemini' ? geminiStats : gptStats;
@@ -498,13 +610,13 @@
                     criteria.forEach((c, idx) => target.criteria[idx] += t.scores[c.id]);
                 }
             });
-            const norm = (stat) => stat.total ? stat.criteria.map(v => v/stat.total) : [0,0,0,0,0];
+            const norm = (stat) => stat.total ? stat.criteria.map(v => v/stat.total) : new Array(criteria.length).fill(0);
             const ctxRadar = document.getElementById('radarChart').getContext('2d');
             if(radarInstance) radarInstance.destroy();
             radarInstance = new Chart(ctxRadar, {
                 type: 'radar',
                 data: {
-                    labels: criteria.map(c => c.label.split('：')[0]),
+                    labels: criteria.map(c => c.label),
                     datasets: [{ label: 'Gemini', data: norm(geminiStats), borderColor: '#3B82F6', backgroundColor: 'rgba(59, 130, 246, 0.2)' }, { label: 'GPT', data: norm(gptStats), borderColor: '#10B981', backgroundColor: 'rgba(16, 185, 129, 0.2)' }]
                 }, options: { scales: { r: { suggestedMin: 0, suggestedMax: 10 } } }
             });
