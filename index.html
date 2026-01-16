@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>論文評測系統 (正式版)</title>
+    <title>論文彙整評測系統 (10人/12篇精準版)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -24,27 +24,29 @@
 </head>
 <body class="text-slate-800 h-screen flex flex-col overflow-hidden">
 
+    <!-- Login View -->
     <div id="view-login" class="fixed inset-0 z-50 flex items-center justify-center login-bg bg-slate-50">
         <div class="glass w-full max-w-md p-8 rounded-2xl shadow-xl fade-in relative overflow-hidden">
             <div class="text-center mb-8">
                 <div class="bg-blue-600 w-12 h-12 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/30 mx-auto mb-4">
                     <i class="fa-solid fa-users-viewfinder text-white text-xl"></i>
                 </div>
-                <h1 class="text-2xl font-bold text-slate-800">論文解析評測系統</h1>
-                <p class="text-slate-500 text-sm mt-2">正式上線版 (Auto-Save)</p>
+                <h1 class="text-2xl font-bold text-slate-800">論文彙整評測系統</h1>
+                <p class="text-slate-500 text-sm mt-2">正式版 (10專家 x 12篇)</p>
             </div>
             <form onsubmit="handleLogin(event)" class="space-y-4">
                 <input type="text" id="login-id" class="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg" placeholder="帳號 (e.g., exp_01)" required>
-                <input type="password" id="login-pwd" class="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg" placeholder="密碼 (1234)" required>
+                <input type="password" id="login-pwd" class="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg" placeholder="密碼" required>
                 <div id="login-error" class="hidden text-red-500 text-xs text-center font-medium">帳號或密碼錯誤</div>
                 <button type="submit" class="w-full bg-slate-900 text-white py-2.5 rounded-lg font-bold hover:bg-slate-800 transition-all">登入系統</button>
             </form>
             <div class="mt-6 pt-6 border-t border-slate-100 text-center text-xs text-slate-400">
-                專家: exp_01 ~ exp_10 (密碼 1234) | 管理員: admin (密碼 admin)
+                專家帳號格式: exp_01 ~ exp_10
             </div>
         </div>
     </div>
 
+    <!-- Main App -->
     <div id="app-container" class="flex flex-col h-full hidden fade-in">
         <nav class="bg-slate-900 text-white shadow-lg z-40 shrink-0">
             <div class="max-w-7xl mx-auto px-4">
@@ -75,7 +77,7 @@
                             <label class="text-xs font-bold text-slate-500 uppercase">檢視專家 (Admin)</label>
                             <select id="expert-selector" onchange="adminChangeExpert(this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-sm"></select>
                         </div>
-                        <h2 class="font-bold text-slate-800 flex justify-between items-center">待評測任務 <span class="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded-full font-mono" id="progress-text">0/15</span></h2>
+                        <h2 class="font-bold text-slate-800 flex justify-between items-center">待評測任務 <span class="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded-full font-mono" id="progress-text">0/12</span></h2>
                         <div class="w-full bg-slate-100 rounded-full h-1.5 mt-3"><div class="bg-blue-600 h-1.5 rounded-full transition-all duration-500" style="width: 0%" id="progress-bar"></div></div>
                     </div>
                     <div class="overflow-y-auto flex-1 p-2 space-y-2 bg-slate-50/50" id="task-list"></div>
@@ -91,7 +93,19 @@
                             <div class="flex justify-between items-start gap-4">
                                 <div class="flex-1">
                                     <div class="flex items-center gap-2 mb-2"><span class="bg-slate-100 text-slate-500 text-xs px-2 py-0.5 rounded font-bold">PAPER</span><span class="text-xs text-slate-400 font-mono" id="p-id">ID</span></div>
-                                    <h1 class="text-lg font-bold text-slate-700 leading-tight" id="p-title">Title</h1>
+                                    <h1 class="text-lg font-bold text-slate-700 leading-tight mb-2" id="p-title">Title</h1>
+                                    
+                                    <!-- 下載按鈕區 -->
+                                    <div class="flex gap-2">
+                                        <a id="btn-download-pdf" href="#" target="_blank" class="text-xs flex items-center gap-1 px-3 py-1.5 rounded bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors border border-slate-200">
+                                            <i class="fa-regular fa-file-pdf text-red-500"></i> 下載原始文獻 (PDF)
+                                        </a>
+                                        <a id="btn-download-word" href="#" target="_blank" class="text-xs flex items-center gap-1 px-3 py-1.5 rounded bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors border border-blue-100">
+                                            <i class="fa-regular fa-file-word text-blue-500"></i> 下載本篇彙整 (Word)
+                                        </a>
+                                    </div>
+                                    <!-- 結束下載按鈕區 -->
+
                                 </div>
                             </div>
                         </div>
@@ -99,7 +113,7 @@
                             <div class="max-w-4xl mx-auto space-y-6">
                                 <div class="flex flex-col shadow-sm rounded-lg overflow-hidden border border-slate-200">
                                     <div class="model-single-gradient p-3 flex justify-between items-center bg-white border-b border-slate-200">
-                                        <h3 class="font-bold text-slate-700 flex items-center gap-2"><i class="fa-solid fa-robot text-blue-500"></i> AI 解析內容</h3>
+                                        <h3 class="font-bold text-slate-700 flex items-center gap-2"><i class="fa-solid fa-robot text-blue-500"></i> AI 彙整內容</h3>
                                         <span class="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded border border-slate-200" id="model-badge">匿名模型</span>
                                     </div>
                                     <div class="bg-white p-6 text-sm text-slate-600 leading-relaxed">
@@ -126,14 +140,15 @@
                 </div>
             </div>
 
+            <!-- Admin View -->
             <div id="view-admin" class="h-full w-full hidden absolute inset-0 bg-[#f8fafc] z-0 p-6 overflow-y-auto">
                  <div class="max-w-6xl mx-auto">
                     <div class="mb-6 flex justify-between items-end">
-                         <div><h2 class="text-2xl font-bold text-slate-800">評測監控台</h2><p class="text-slate-500 text-sm">每篇解析需被評 ≥2 次</p></div>
+                         <div><h2 class="text-2xl font-bold text-slate-800">評測監控台 (10人 / 12篇)</h2><p class="text-slate-500 text-sm">每篇彙整預計被評 2 次 (總任務 120 / 總彙整 60)</p></div>
                          <button onclick="distributeTasksGlobally(true)" class="text-xs bg-red-50 text-red-500 border border-red-200 px-3 py-1 rounded">重置分配</button>
                     </div>
                     <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 mb-6">
-                        <div class="flex justify-between mb-4"><h3 class="font-bold text-slate-700">60篇解析覆蓋率</h3><div class="text-xs flex gap-3"><span class="flex items-center gap-1"><span class="w-3 h-3 bg-[#dcfce7] border border-[#bbf7d0]"></span> ≥2 OK</span><span class="flex items-center gap-1"><span class="w-3 h-3 bg-[#fee2e2] border border-[#fecaca]"></span> <2 Warning</span></div></div>
+                        <div class="flex justify-between mb-4"><h3 class="font-bold text-slate-700">60篇彙整覆蓋率 (30篇文獻 x 2模型)</h3><div class="text-xs flex gap-3"><span class="flex items-center gap-1"><span class="w-3 h-3 bg-[#dcfce7] border border-[#bbf7d0]"></span> ≥2 OK</span><span class="flex items-center gap-1"><span class="w-3 h-3 bg-[#fee2e2] border border-[#fecaca]"></span> <2 Warning</span></div></div>
                         <div class="overflow-x-auto"><table class="w-full text-xs text-center border-collapse"><thead><tr><th class="p-2 text-left text-slate-400">ID</th><th class="p-2">Gemini</th><th class="p-2">GPT</th></tr></thead><tbody id="coverage-table-body"></tbody></table></div>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -145,63 +160,74 @@
         </main>
     </div>
 
-    <script src="data.js"></script>
+    <!-- 嘗試引用外部資料，如果失敗也不會報錯 -->
+    <script src="data.js" onerror="console.log('data.js not found, fallback to embedded data')"></script>
 
     <script>
         // *** 重要：請將下方的網址替換為您的 Google Apps Script 部署網址 ***
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxz-wPAJspo8oCMngvshqBzdpcus2Z3Z5a60ZroXMTX3Wrp0IWneCrHr0jWpJR4UC_W/exec"; 
 
         const criteria = [
-            { id: 'txt_acc', label: '文字：內容正確性', desc: '內文說明與原文一致' },
-            { id: 'txt_cit', label: '文字：引用正確性', desc: '引用原文正確' },
-            { id: 'txt_read', label: '文字：可讀性', desc: '淺顯易懂' },
-            { id: 'vis_acc', label: '圖示：正確性', desc: '圖示內容正確' },
-            { id: 'vis_read', label: '圖示：可讀性', desc: '圖示可以輕鬆看懂' }
+            { id: 'completeness', label: '1. 資訊完整性 (Completeness)', desc: '[基礎] 是否完整涵蓋背景、方法、結果與結論？有無遺漏重要章節？' },
+            { id: 'content_acc', label: '2. 內容信度 (Accuracy)', desc: '[基礎] 數據(P值/樣本數)、專有名詞是否精確？有無幻覺錯誤？' },
+            { id: 'structure', label: '3. 結構與可讀性 (Readability)', desc: '[溝通] 排版是否清晰？語句是否通順流暢？是否易於閱讀？' },
+            { id: 'insight', label: '4. 批判與觀點 (Insight)', desc: '[高階] 是否能精準篩選並提煉出該研究的核心學術價值與限制？' },
+            { id: 'utility', label: '5. 臨床應用價值 (Utility)', desc: '[頂層] 內容是否能轉化為具體的臨床建議？對實務有無幫助？' }
         ];
 
+        // 定義使用者資料庫
         const USER_DB = { 'admin': { pwd: 'admin', name: 'Admin', role: 'admin' } };
         for(let i=1; i<=10; i++) {
             const id = i < 10 ? `exp_0${i}` : `exp_${i}`;
-            USER_DB[id] = { pwd: '1234', name: `Expert ${i}`, role: 'expert' };
+            const num = i;
+            const dynamicPwd = `${num}${num+1}${num+2}${num+3}`; 
+            USER_DB[id] = { pwd: dynamicPwd, name: `Expert ${i}`, role: 'expert' };
         }
 
-        let ASSIGNED_TASKS_DB = {}; // { 'exp_01': [tasks...], ... }
+        let ASSIGNED_TASKS_DB = {}; 
 
-        // Load tasks from LocalStorage (Persistence)
-        function loadState() {
-            const saved = localStorage.getItem('AI_REVIEW_DB');
-            if (saved) {
-                ASSIGNED_TASKS_DB = JSON.parse(saved);
-                console.log("Loaded saved state from LocalStorage");
-            } else {
-                console.log("No saved state, initializing...");
+        // 核心修正：安全獲取 PAPER_POOL
+        function getPaperPool() {
+            if (typeof PAPER_POOL !== 'undefined') {
+                return PAPER_POOL;
             }
+            // 如果外部 data.js 沒載入，回傳一個預設的空資料或範例，避免 crash
+            console.warn("Using fallback paper data");
+            return [
+                { paperId: "01", title: "Paper 01 (Fallback)", abstract: "Data.js not loaded", geminiContent: "N/A", gptContent: "N/A" }
+            ];
         }
 
-        function saveState() {
-            localStorage.setItem('AI_REVIEW_DB', JSON.stringify(ASSIGNED_TASKS_DB));
+        function loadState() {
+            const saved = localStorage.getItem('AI_REVIEW_DB_V2');
+            if (saved) { ASSIGNED_TASKS_DB = JSON.parse(saved); console.log("Loaded state"); } 
+            else { console.log("No state"); }
         }
+
+        function saveState() { localStorage.setItem('AI_REVIEW_DB_V2', JSON.stringify(ASSIGNED_TASKS_DB)); }
 
         function distributeTasksGlobally(forceReset = false) {
             if (!forceReset && Object.keys(ASSIGNED_TASKS_DB).length > 0) return;
-            
             if(forceReset && !confirm("確定重置？所有專家分配將被清空。")) return;
 
-            console.log("Distributing tasks...");
+            console.log("Distributing tasks (10 Experts, 12 Tasks each)...");
             ASSIGNED_TASKS_DB = {};
             Object.keys(USER_DB).forEach(uid => { if(USER_DB[uid].role === 'expert') ASSIGNED_TASKS_DB[uid] = []; });
 
+            const pool = getPaperPool(); // 使用安全獲取函數
             let targetCounts = {};
-            PAPER_POOL.forEach(p => {
-                targetCounts[`${p.paperId}_Gemini`] = 0;
-                targetCounts[`${p.paperId}_GPT`] = 0;
+            
+            pool.forEach(p => { 
+                targetCounts[`${p.paperId}_Gemini`] = 0; 
+                targetCounts[`${p.paperId}_GPT`] = 0; 
             });
 
-            const expertIds = Object.keys(USER_DB).filter(k => USER_DB[k].role === 'expert');
-            
-            // Allocation Algorithm
-            for (let round = 0; round < 15; round++) {
+            const expertIds = Object.keys(USER_DB).filter(k => USER_DB[k].role === 'expert'); 
+            const TARGET_PER_EXPERT = 12;
+
+            for (let round = 0; round < TARGET_PER_EXPERT; round++) {
                 let shuffledExperts = [...expertIds].sort(() => 0.5 - Math.random());
+                
                 shuffledExperts.forEach(expertId => {
                     const existingPaperIds = new Set(ASSIGNED_TASKS_DB[expertId].map(t => t.paperId));
                     let candidates = [];
@@ -212,7 +238,6 @@
                         }
                     });
 
-                    // Greedy sort
                     candidates.sort((a, b) => {
                         if (a.count !== b.count) return a.count - b.count;
                         return 0.5 - Math.random();
@@ -220,24 +245,28 @@
 
                     if (candidates.length > 0) {
                         const best = candidates[0];
-                        const paperData = PAPER_POOL.find(p => p.paperId === best.pid);
-                        ASSIGNED_TASKS_DB[expertId].push({
-                            id: `task_${expertId}_${ASSIGNED_TASKS_DB[expertId].length + 1}`,
-                            expertId: expertId,
-                            paperId: paperData.paperId,
-                            title: paperData.title,
-                            abstract: paperData.abstract,
-                            aiContent: best.model === 'Gemini' ? paperData.geminiContent : paperData.gptContent,
-                            realModel: best.model,
-                            status: 'pending',
-                            scores: { txt_acc: 5, txt_cit: 5, txt_read: 5, vis_acc: 5, vis_read: 5 }
-                        });
-                        targetCounts[best.key]++;
+                        const paperData = pool.find(p => p.paperId === best.pid);
+                        
+                        if (paperData) {
+                            ASSIGNED_TASKS_DB[expertId].push({
+                                id: `task_${expertId}_${ASSIGNED_TASKS_DB[expertId].length + 1}`,
+                                expertId: expertId,
+                                paperId: paperData.paperId,
+                                title: paperData.title,
+                                abstract: paperData.abstract,
+                                aiContent: best.model === 'Gemini' ? paperData.geminiContent : paperData.gptContent,
+                                realModel: best.model,
+                                status: 'pending',
+                                scores: { completeness: 5, content_acc: 5, structure: 5, insight: 5, utility: 5 }
+                            });
+                            targetCounts[best.key]++;
+                        }
                     }
                 });
             }
-            saveState(); // Save to local storage
-            if(document.getElementById('view-admin').offsetParent !== null) updateAdminStats();
+            console.log("Distribution complete:", targetCounts);
+            saveState();
+            if(document.getElementById('view-admin') && !document.getElementById('view-admin').classList.contains('hidden')) updateAdminStats();
         }
 
         let loggedInUser = null; 
@@ -247,8 +276,10 @@
         let radarInstance = null;
 
         window.addEventListener('load', () => {
-            loadState(); // Restore logic
-            if(Object.keys(ASSIGNED_TASKS_DB).length === 0) distributeTasksGlobally();
+            loadState(); 
+            setTimeout(() => {
+                if(Object.keys(ASSIGNED_TASKS_DB).length === 0) distributeTasksGlobally();
+            }, 500); // 增加延遲確保載入
         });
 
         function handleLogin(e) {
@@ -256,7 +287,7 @@
             const id = document.getElementById('login-id').value;
             const pwd = document.getElementById('login-pwd').value;
             const errorMsg = document.getElementById('login-error');
-
+            
             if (USER_DB[id] && USER_DB[id].pwd === pwd) {
                 loggedInUser = { id: id, ...USER_DB[id] };
                 errorMsg.classList.add('hidden');
@@ -272,7 +303,6 @@
             document.getElementById('view-login').classList.add('hidden');
             document.getElementById('app-container').classList.remove('hidden');
             document.getElementById('current-user-name').innerText = loggedInUser.name;
-            
             const btnAdmin = document.getElementById('btn-admin');
             const adminSelector = document.getElementById('admin-selector-wrapper');
             const expertSelector = document.getElementById('expert-selector');
@@ -297,7 +327,6 @@
             const adminView = document.getElementById('view-admin');
             const btnExpert = document.getElementById('btn-expert');
             const btnAdmin = document.getElementById('btn-admin');
-
             if (viewName === 'expert') {
                 expertView.classList.remove('hidden');
                 adminView.classList.add('hidden');
@@ -319,8 +348,8 @@
             currentTaskId = null;
             document.getElementById('review-panel').classList.add('opacity-0', 'pointer-events-none');
             document.getElementById('empty-state').classList.remove('hidden');
-            document.getElementById('view-expert').classList.remove('hidden'); // Ensure visible
-            document.getElementById('view-admin').classList.add('hidden'); // Hide admin dash
+            document.getElementById('view-expert').classList.remove('hidden'); 
+            document.getElementById('view-admin').classList.add('hidden');
             renderTaskList();
         }
 
@@ -360,6 +389,15 @@
                 badge.className = "text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded border border-slate-200";
             }
 
+            const pdfBtn = document.getElementById('btn-download-pdf');
+            const wordBtn = document.getElementById('btn-download-word');
+            if(pdfBtn && wordBtn) {
+                pdfBtn.href = `files/pdf/P${task.paperId}.pdf`;
+                pdfBtn.setAttribute('download', `Paper_${task.paperId}.pdf`);
+                wordBtn.href = `files/docx/P${task.paperId}_${task.realModel}.docx`;
+                wordBtn.setAttribute('download', `Analysis_P${task.paperId}.docx`);
+            }
+
             const container = document.getElementById('score-form-container');
             container.innerHTML = criteria.map(c => `
                 <div><div class="flex justify-between mb-2"><label class="text-sm font-bold text-slate-700">${c.label}</label><span class="text-sm font-mono font-bold text-blue-600 bg-blue-50 px-2 rounded" id="val-${c.id}">${task.scores[c.id]}</span></div><p class="text-xs text-slate-400 mb-3">${c.desc}</p><input type="range" min="0" max="10" value="${task.scores[c.id]}" step="0.5" id="range-${c.id}" oninput="document.getElementById('val-${c.id}').innerText=this.value; calculateTotal()"></div>
@@ -386,14 +424,13 @@
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 傳送中...';
             btn.classList.add('opacity-75', 'cursor-not-allowed');
 
-            // Send to Google Sheets (no-cors mode)
             fetch(GOOGLE_SCRIPT_URL, {
                 method: 'POST',
                 body: JSON.stringify(task),
-                mode: 'no-cors' // Important for Google Script
+                mode: 'no-cors' 
             }).then(() => {
                 task.status = 'completed';
-                saveState(); // Save to local
+                saveState();
                 
                 btn.innerHTML = '<i class="fa-solid fa-check"></i> 儲存成功';
                 btn.classList.remove('opacity-75', 'cursor-not-allowed', 'bg-blue-600', 'hover:bg-blue-700');
@@ -407,10 +444,7 @@
                 }, 1500);
             }).catch(err => {
                 console.error(err);
-                alert("上傳失敗，請檢查網路。但資料已暫存於瀏覽器。");
-                task.status = 'completed'; // Still mark as done locally
-                saveState();
-                renderTaskList();
+                alert("上傳失敗，請檢查網路。");
                 btn.innerHTML = original;
                 btn.classList.remove('opacity-75', 'cursor-not-allowed');
             });
@@ -418,16 +452,26 @@
 
         function updateAdminStats() {
             let counts = {};
-            PAPER_POOL.forEach(p => { counts[`${p.paperId}_Gemini`] = 0; counts[`${p.paperId}_GPT`] = 0; });
-            Object.values(ASSIGNED_TASKS_DB).flat().forEach(t => { counts[`${t.paperId}_${t.realModel}`]++; });
+            const pool = getPaperPool();
+            pool.forEach(p => { counts[`${p.paperId}_Gemini`] = 0; counts[`${p.paperId}_GPT`] = 0; });
+            Object.values(ASSIGNED_TASKS_DB).flat().forEach(t => { 
+                if(counts[`${t.paperId}_${t.realModel}`] !== undefined) {
+                    counts[`${t.paperId}_${t.realModel}`]++; 
+                }
+            });
 
             const tbody = document.getElementById('coverage-table-body');
             let html = '';
-            for(let i=1; i<=30; i++) {
+            const maxShow = pool.length;
+            
+            for(let i=1; i<=maxShow; i++) {
                 const pid = i < 10 ? `0${i}` : `${i}`;
-                const gem = counts[`${pid}_Gemini`];
-                const gpt = counts[`${pid}_GPT`];
-                html += `<tr class="border-b border-slate-50"><td class="p-2 text-left font-mono text-slate-500">P-${pid}</td><td class="p-2"><span class="px-3 py-1 rounded-full text-xs font-bold ${gem >= 2 ? 'cov-good' : 'cov-bad'}">${gem}</span></td><td class="p-2"><span class="px-3 py-1 rounded-full text-xs font-bold ${gpt >= 2 ? 'cov-good' : 'cov-bad'}">${gpt}</span></td></tr>`;
+                const gem = counts[`${pid}_Gemini`] || 0;
+                const gpt = counts[`${pid}_GPT`] || 0;
+                const gemClass = gem >= 2 ? 'cov-good' : 'cov-bad';
+                const gptClass = gpt >= 2 ? 'cov-good' : 'cov-bad';
+
+                html += `<tr class="border-b border-slate-50"><td class="p-2 text-left font-mono text-slate-500">P-${pid}</td><td class="p-2"><span class="px-3 py-1 rounded-full text-xs font-bold ${gemClass}">${gem}</span></td><td class="p-2"><span class="px-3 py-1 rounded-full text-xs font-bold ${gptClass}">${gpt}</span></td></tr>`;
             }
             tbody.innerHTML = html;
 
@@ -439,10 +483,9 @@
                 data: {
                     labels: experts.map(eid => USER_DB[eid].name),
                     datasets: [{ label: '完成篇數', data: experts.map(eid => ASSIGNED_TASKS_DB[eid].filter(t => t.status === 'completed').length), backgroundColor: '#64748B', borderRadius: 4 }]
-                }, options: { scales: { y: { beginAtZero: true, max: 15 } } }
+                }, options: { scales: { y: { beginAtZero: true, max: 12 } } }
             });
 
-            // Radar
             let geminiStats = { total: 0, criteria: [0,0,0,0,0] };
             let gptStats = { total: 0, criteria: [0,0,0,0,0] };
             Object.values(ASSIGNED_TASKS_DB).flat().forEach(t => {
